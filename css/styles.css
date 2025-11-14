@@ -1,0 +1,195 @@
+/* css/styles.css - 借鉴自原仓库的现代风格 */
+
+/* 1. 颜色和变量 (借鉴) */
+:root {
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --background-color: #fafbff;
+  --card-bg-color: #ffffff;
+  --text-color: #1e293b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(102, 126, 234, 0.1);
+  --shadow-md: 0 4px 15px rgba(102, 126, 234, 0.15);
+  --radius-md: 12px;
+  --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 2. 页头 (借鉴) */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.site-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-color);
+}
+.logo-image { height: 36px; }
+.site-title {
+  font-size: 20px;
+  font-weight: 600;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-controls { display: flex; gap: 16px; }
+.icon-button {
+  color: var(--primary-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.icon-button:hover { background-color: rgba(102, 126, 234, 0.1); border-radius: 50%; }
+
+/* 3. 主内容区域 */
+main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.report-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.report-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.report-header p {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* 4. 加载和错误 (借鉴) */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spinner 1s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spinner { to { transform: rotate(360deg); } }
+
+.error-container {
+  padding: 20px;
+  background-color: #fff0f0;
+  color: #d90000;
+  border: 1px solid #ffc0c0;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+/* 5. 报告和热点图样式 (新) */
+.treemap-section, .report-section {
+  margin-bottom: 32px;
+}
+.treemap-section h2, .report-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.report-card {
+  background-color: var(--card-bg-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* "热点预览图" (D3 Treemap) 样式 */
+#treemap-container {
+  width: 100%;
+  min-height: 400px;
+  background-color: var(--card-bg-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.treemap-cell {
+  border: 1px solid var(--background-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 6px;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+.treemap-cell:hover {
+  transform: scale(1.02);
+  z-index: 10;
+  box-shadow: var(--shadow-md);
+}
+.treemap-text {
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  text-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+/* 6. 页脚 (借鉴) */
+footer {
+  border-top: 1px solid var(--border-color);
+  padding: 24px;
+  margin-top: auto;
+}
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+  color: #94a3b8; /* text-tertiary */
+  font-size: 14px;
+}
+.footer-content a { color: var(--primary-color); }

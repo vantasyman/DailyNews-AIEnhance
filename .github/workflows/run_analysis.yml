@@ -1,0 +1,62 @@
+# .github/workflows/run_analysis.yml
+# 描述: 每天自动运行 AI 趋势分析引擎的自动化工作流
+
+name: AI Trend Analysis Workflow
+
+on:
+  # 1. 允许你手动在 GitHub "Actions" 标签页点击 "Run workflow" 来测试
+  # (这借鉴了原仓库的设计)
+  workflow_dispatch:
+  
+  # 2. 定时器：每天在 UTC 22:00 自动运行
+  # (你可以根据你的需求修改这个 cron 表达式)
+  schedule:
+    - cron: '0 22 * * *'
+
+jobs:
+  build-and-analyze:
+    # 运行在 GitHub 提供的标准 Linux 虚拟机上
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 第 1 步: 签出 (Checkout) 你的代码
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      # 第 2 步: 设置 Python 3.12 (匹配我们的 pyproject.toml)
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 第 3 步: 安装 uv (原仓库使用的高性能 Python 包管理器)
+      - name: Install uv
+        run: pip install uv
+
+      # 第 4 步: 安装所有 Python 依赖
+      # (注意：我们从根目录运行，所以指定 scripts/pyproject.toml)
+      - name: Install dependencies
+        run: uv pip install -r scripts/pyproject.toml
+
+      # 第 5 步: 运行我们的主自动化脚本！
+      - name: Run Python Automation Pipeline
+        env:
+          # --- 数据库密钥 (来自 GitHub Secrets) ---
+          # 这是我们的 "crawler_role" 和 "analyzer_role" 权限
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          
+          # --- API 密钥 (来自 GitHub Secrets) ---
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }} # (可选)
+          
+          # --- 配置 (来自 GitHub Variables) ---
+          # 借鉴原仓库，这些是公开配置
+          MODEL_NAME: ${{ vars.MODEL_NAME || 'deepseek-chat' }}
+          LANGUAGE: ${{ vars.LANGUAGE || 'Chinese' }}
+          
+        # 使用 `python -m scripts.main` 来运行
+        # `-m` 告诉 Python 将 'scripts' 目录视为一个模块包
+        # 这样 'from . import crawler' 这样的相对导入才能正常工作
+        run: python -m scripts.main
