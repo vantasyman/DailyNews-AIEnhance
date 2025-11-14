@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 from tqdm import tqdm
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic_core import PydanticException
+from pydantic import ValidationError
 
 # 导入我们自己的模块
 from .db import get_db_client
@@ -81,7 +81,7 @@ def process_single_article(article: Dict[str, Any], chain) -> Dict[str, Any] | N
         # 将结果与文章 ID 绑定，以便稍后存入数据库
         return {"article_id": article['article_id'], "analysis": response}
         
-    except PydanticException as e:
+    except ValidationError as e:
         tqdm.write(f"🟡 AI 输出解析失败 (ID: {article['article_id']}): {e}")
     except Exception as e:
         tqdm.write(f"🔴 AI 调用失败 (ID: {article['article_id']}): {e}")

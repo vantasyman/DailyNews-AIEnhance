@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic_core import PydanticException
+from pydantic import ValidationError
 from collections import defaultdict
 from typing import List, Dict
 # 导入我们自己的模块
@@ -95,7 +95,7 @@ def generate_l2_report(category: str, l1_data: List[Dict], chain) -> L2ReportStr
         response: L2ReportStructure = chain.invoke(ai_input)
         return response
         
-    except PydanticException as e:
+    except ValidationError as e:
         tqdm.write(f"🟡 AI 输出解析失败 (分类: {category}): {e}")
     except Exception as e:
         tqdm.write(f"🔴 AI 调用失败 (分类: {category}): {e}")
