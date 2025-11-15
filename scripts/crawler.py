@@ -41,7 +41,7 @@ def fetch_articles_from_api(topic: Dict[str, Any], api_key: str) -> List[Dict[st
     
     # NewsAPI 允许使用 'q' (关键词) 和 'category' (分类)
     # 我们将它们组合使用，并用 'NOT 政治' 来规避风险
-    query = f'"{db_keyword}" NOT 政治 NOT election'
+    query = db_keyword
     
     # 计算一天前的时间，只看最新的
     yesterday = (datetime.now() - timedelta(days=1)).isoformat()
