@@ -1,7 +1,7 @@
 // js/app.js
 
 // 1. 从我们的 supabase_client.js 模块中导入客户端
-import { supabase } from './supabase_client.js';
+import { supabaseClient as supabase } from './supabase_client.js';
 
 // --- [新增] 全局变量 ---
 let modalOverlay;
