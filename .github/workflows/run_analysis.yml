@@ -3,21 +3,30 @@ name: AI Trend Analysis & Deploy Pages
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "选择运行模式: both / backend / frontend"
+        required: false
+        default: "both"
   schedule:
-    - cron: '0 22 * * *'
+    - cron: "0 22 * * *" # 每天22:00自动运行
 
 jobs:
-  # --- 任务 1: 后端自动化脚本 (保持不变) ---
+  # ------------------------------------
+  # Job 1 : 后端 Python 自动化分析
+  # ------------------------------------
   run-analysis:
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.mode == 'both' || github.event.inputs.mode == 'backend' }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install uv
         run: pip install uv
@@ -27,28 +36,25 @@ jobs:
 
       - name: Run Python Automation Pipeline
         env:
-          # --- 数据库密钥 (来自 GitHub Secrets) ---
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          
-          # --- API 密钥 (来自 GitHub Secrets) ---
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
-          
-          # --- 配置 (来自 GitHub Variables) ---
           MODEL_NAME: ${{ vars.MODEL_NAME || 'deepseek-chat' }}
           LANGUAGE: ${{ vars.LANGUAGE || 'Chinese' }}
-          
-          # ⬇️ 【新增】将 GitHub Variable 注入到环境变量中
           TRACKED_TOPICS: ${{ vars.TRACKED_TOPICS || '' }}
-          
         run: python -m scripts.main
 
-  # --- 任务 2: 构建和部署前端 (已添加调试步骤) ---
+  # ------------------------------------
+  # Job 2 : 前端替换 + 部署 Pages
+  # ------------------------------------
   deploy-pages:
     runs-on: ubuntu-latest
-    needs: run-analysis # 确保在分析任务成功后才部署
+    needs: [run-analysis] # 静态依赖，不再动态计算
+
+    # 用 if 来控制什么时候执行
+    if: ${{ github.event.inputs.mode == 'both' || github.event.inputs.mode == 'frontend' || github.event_name == 'schedule' }}
 
     permissions:
       contents: write
@@ -57,36 +63,35 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # --- [新增调试步骤 1] ---
-      # 打印变量，看看 GitHub Actions 在这一步到底读到了什么
-      - name: 'Debug: 打印变量'
+      - name: Debug Vars
         run: |
-          echo "vars.SUPABASE_URL is: ${{ vars.SUPABASE_URL }}"
-          echo "vars.SUPABASE_ANON_KEY is: ${{ vars.SUPABASE_ANON_KEY }}"
+          echo "vars.SUPABASE_URL: ${{ vars.SUPABASE_URL }}"
+          echo "vars.SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}"
 
-      # --- [新增调试步骤 2] ---
-      # 打印替换前的 js/supabase_client.js 文件内容
-      - name: 'Debug: 打印替换前的文件'
+      - name: Before replace
         run: |
           echo "--- Content before sed ---"
-          cat js/supabase_client.js
-          echo "--------------------------"
+          head -n 20 js/supabase_client.js
 
-      - name: 替换前端 JS 中的占位符
+      - name: Replace placeholders
         run: |
-          # 我们使用和之前完全一样的命令
-          sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" js/supabase_client.js
-          sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" js/supabase_client.js
+          sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" ./js/supabase_client.js
+          sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" ./js/supabase_client.js
 
-      # --- [新增调试步骤 3] ---
-      # 打印替换后的 js/supabase_client.js 文件内容
-      - name: 'Debug: 打印替换后的文件'
+      - name: Verify
+        run: |
+          if grep -q "%SUPABASE_URL%" ./js/supabase_client.js; then
+            echo "❌替换未成功，终止部署"; exit 1;
+          else
+            echo "✅占位符替换成功"
+          fi
+
+      - name: After replace
         run: |
           echo "--- Content after sed ---"
-          cat js/supabase_client.js
-          echo "-------------------------"
+          head -n 20 js/supabase_client.js
 
-      - name: 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
