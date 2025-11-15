@@ -47,10 +47,11 @@ def fetch_articles_from_api(topic: Dict[str, Any], api_key: str) -> List[Dict[st
     yesterday = (datetime.now() - timedelta(days=1)).isoformat()
     
     params = {
-        "token": api_key,
-        "q": query, # query 变量 (e.g., '"NVIDIA"') 保持不变
+        "q": query,
+        "lang": "en",
         "max": ARTICLES_PER_TOPIC,
-        "in": "title,description" # 仅搜索标题和描述
+        "sortby": "publishedAt",
+        "apikey": api_key,   # ✅ 官方推荐命名
     }
 
     try:
