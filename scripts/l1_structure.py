@@ -4,7 +4,7 @@ from typing import List, Dict, Literal
 # 定义“实体”的数据结构
 class ExtractedEntity(BaseModel):
     name: str = Field(description="The specific name of the entity, e.g., 'NVIDIA' or 'Blackwell GPU'")
-    type: Literal['COMPANY', 'PRODUCT', 'PERSON', 'TECHNOLOGY', 'OTHER'] = Field(description="The type of the entity.")
+    type: Literal['COMPANY', 'PRODUCT', 'PERSON', 'TECHNOLOGY', 'EVENT', 'OTHER'] = Field(description="The type of the entity.")
 
 # 定义 AI 调用的总输出结构
 # 这对应我们 schema.sql 中的 l1_analysis_sentiment 和 l1_analysis_entities 表
