@@ -1,0 +1,28 @@
+[project]
+name = "ai-trend-engine-scripts"
+version = "0.1.0"
+description = "后自动化脚本：负责爬取新闻、进行AI分析，并生成每日报告。"
+authors = []
+readme = "../README.md"
+requires-python = ">=3.12"  # 沿用原仓库的标准
+
+dependencies = [
+    # --- 核心 AI 库 (沿用自原仓库) ---
+    "langchain>=0.3.20",           # 强大的 AI 编排框架
+    "langchain-openai>=0.3.9",   # 连接 DeepSeek, OpenAI 等
+
+    # --- 数据库 (我们的核心) ---
+    "supabase>=2.0.0",    
+
+    # --- 网络爬虫 (新) ---
+    "httpx>=0.27.0",             
+    # "newsapi-python>=0.2.7",   
+    # "google-search-results>=2.4.2", 
+
+    # --- 实用工具 (沿用自原仓库) ---
+    "tqdm>=4.67.1",              
+    "python-dotenv>=1.0.0"       
+]
+
+[project.license]
+text = "MIT" # 暂时沿用，请确保你遵循原仓库的 LICENSE 要求
