@@ -3,30 +3,21 @@ name: AI Trend Analysis & Deploy Pages
 
 on:
   workflow_dispatch:
-    inputs:
-      mode:
-        description: "选择运行模式: both / backend / frontend"
-        required: false
-        default: "both"
   schedule:
-    - cron: "0 22 * * *" # 每天22:00自动运行
+    - cron: '0 22 * * *'
 
 jobs:
-  # ------------------------------------
-  # Job 1 : 后端 Python 自动化分析
-  # ------------------------------------
+  # --- 任务 1: 后端自动化脚本 (保持不变) ---
   run-analysis:
-    if: ${{ github.event_name == 'schedule' || github.event.inputs.mode == 'both' || github.event.inputs.mode == 'backend' }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install uv
         run: pip install uv
@@ -36,25 +27,28 @@ jobs:
 
       - name: Run Python Automation Pipeline
         env:
+          # --- 数据库密钥 (来自 GitHub Secrets) ---
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          
+          # --- API 密钥 (来自 GitHub Secrets) ---
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          
+          # --- 配置 (来自 GitHub Variables) ---
           MODEL_NAME: ${{ vars.MODEL_NAME || 'deepseek-chat' }}
           LANGUAGE: ${{ vars.LANGUAGE || 'Chinese' }}
+          
+          # ⬇️ 【新增】将 GitHub Variable 注入到环境变量中
           TRACKED_TOPICS: ${{ vars.TRACKED_TOPICS || '' }}
+          
         run: python -m scripts.main
 
-  # ------------------------------------
-  # Job 2 : 前端替换 + 部署 Pages
-  # ------------------------------------
+  # --- 任务 2: 构建和部署前端 (已添加调试步骤) ---
   deploy-pages:
     runs-on: ubuntu-latest
-    needs: [run-analysis] # 静态依赖，不再动态计算
-
-    # 用 if 来控制什么时候执行
-    if: ${{ github.event.inputs.mode == 'both' || github.event.inputs.mode == 'frontend' || github.event_name == 'schedule' }}
+    needs: run-analysis
 
     permissions:
       contents: write
@@ -63,35 +57,41 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Debug Vars
+      # 打印变量
+      - name: 'Debug: 打印变量'
         run: |
-          echo "vars.SUPABASE_URL: ${{ vars.SUPABASE_URL }}"
-          echo "vars.SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}"
+          echo "vars.SUPABASE_URL is: ${{ vars.SUPABASE_URL }}"
+          echo "vars.SUPABASE_ANON_KEY is: ${{ vars.SUPABASE_ANON_KEY }}"
 
-      - name: Before replace
+      # 打印替换前内容
+      - name: 'Debug: 打印替换前的文件'
         run: |
           echo "--- Content before sed ---"
           head -n 20 js/supabase_client.js
 
-      - name: Replace placeholders
+      # 替换占位符（确定路径正确）
+      - name: 替换前端 JS 中的占位符
         run: |
           sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" ./js/supabase_client.js
           sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" ./js/supabase_client.js
 
-      - name: Verify
+      # 验证替换成功
+      - name: 验证替换是否生效
         run: |
+          echo "--- 校验替换结果 ---"
           if grep -q "%SUPABASE_URL%" ./js/supabase_client.js; then
-            echo "❌替换未成功，终止部署"; exit 1;
+            echo "❌ 替换失败，占位符仍然存在！"; exit 1
           else
-            echo "✅占位符替换成功"
+            echo "✅ 替换成功：文件中已包含真实 URL。"
           fi
 
-      - name: After replace
+      - name: 'Debug: 打印替换后的文件'
         run: |
           echo "--- Content after sed ---"
           head -n 20 js/supabase_client.js
 
-      - name: Deploy to GitHub Pages
+      # 最后部署
+      - name: 部署到 GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
