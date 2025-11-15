@@ -154,22 +154,36 @@ def main():
     
     # 1. 初始化 AI
     try:
-        l1_prompt_template = load_prompt()
-        prompt = ChatPromptTemplate.from_template(l1_prompt_template)
+        # 【新】导入 Pydantic 解析器
+        from langchain_core.output_parsers import PydanticOutputParser
         
-        # 使用 Pydantic 模型强制 AI 输出 JSON
-        llm = ChatOpenAI(model=MODEL_NAME).with_structured_output(L1AnalysisStructure)
+        # 1. 加载原始提示词字符串
+        l1_prompt_template_str = load_prompt()
         
-        chain = prompt | llm
-        print(f"  > AI 模型 ({MODEL_NAME}) 和提示词已加载。")
+        # 2. 设置我们的解析器，告诉它我们想要 L1AnalysisStructure
+        parser = PydanticOutputParser(pydantic_object=L1AnalysisStructure)
+        
+        # 3. 从解析器获取 JSON 格式化指令
+        format_instructions = parser.get_format_instructions()
+        
+        # 4. 【关键】将格式化指令附加到原始提示词的末尾
+        l1_prompt_template_str += "\n\n{format_instructions}\n"
+        
+        # 5. 创建新的、包含格式化指令的 PromptTemplate
+        prompt = ChatPromptTemplate.from_template(
+            l1_prompt_template_str,
+            partial_variables={"format_instructions": format_instructions}
+        )
+        
+        # 6. 【修复】初始化 LLM，但*不*使用 .with_structured_output()
+        llm = ChatOpenAI(model=MODEL_NAME)
+        
+        # 7. 创建新的 chain，它会在 LLM 输出后调用我们的解析器
+        chain = prompt | llm | parser
+        
+        print(f"  > AI 模型 ({MODEL_NAME}) 和提示词已加载 (使用 PydanticParser)。")
     except Exception as e:
         print(f"🔴 致命错误: 无法初始化 AI: {e}")
-        return
-
-    # 2. 获取待处理的文章
-    articles_to_process = get_unanalyzed_articles()
-    if not articles_to_process:
-        print("⏹️ 没有新文章需要分析。脚本退出。")
         return
         
     print(f"  (Analysis Step 2/3) 开始使用 {MAX_WORKERS} 个并行线程处理 {len(articles_to_process)} 篇文章...")
