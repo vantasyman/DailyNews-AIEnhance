@@ -49,50 +49,32 @@ jobs:
   deploy-pages:
     runs-on: ubuntu-latest
     needs: run-analysis
-
     permissions:
-      contents: write
-
+      contents: write  # 支持写入 main 分支
     steps:
-      - name: Checkout repository code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 打印变量
-      - name: 'Debug: 打印变量'
+      - name: 🔍 调试：验证仓库文件存在
         run: |
-          echo "vars.SUPABASE_URL is: ${{ vars.SUPABASE_URL }}"
-          echo "vars.SUPABASE_ANON_KEY is: ${{ vars.SUPABASE_ANON_KEY }}"
+          pwd
+          ls -R | head -n 200
+          echo "===== 确认 js 文件存在 ====="
+          find . -name supabase_client.js
 
-      # 打印替换前内容
-      - name: 'Debug: 打印替换前的文件'
+      - name: ⚙️ 替换前端占位符
         run: |
-          echo "--- Content before sed ---"
-          head -n 20 js/supabase_client.js
+          echo "--- 替换前 ---"
+          grep SUPABASE_URL js/supabase_client.js || true
+          sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" js/supabase_client.js
+          sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" js/supabase_client.js
+          echo "--- 替换后 ---"
+          grep SUPABASE_URL js/supabase_client.js || true
 
-      # 替换占位符（确定路径正确）
-      - name: 替换前端 JS 中的占位符
-        run: |
-          sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" ./js/supabase_client.js
-          sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" ./js/supabase_client.js
-
-      # 验证替换成功
-      - name: 验证替换是否生效
-        run: |
-          echo "--- 校验替换结果 ---"
-          if grep -q "%SUPABASE_URL%" ./js/supabase_client.js; then
-            echo "❌ 替换失败，占位符仍然存在！"; exit 1
-          else
-            echo "✅ 替换成功：文件中已包含真实 URL。"
-          fi
-
-      - name: 'Debug: 打印替换后的文件'
-        run: |
-          echo "--- Content after sed ---"
-          head -n 20 js/supabase_client.js
-
-      # 最后部署
-      - name: 部署到 GitHub Pages
+      - name: 🚀 部署到 main(root)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish_branch: main
+          publish_dir: ./                 # 部署目录：仓库根目录
+          allow_empty_commit: true
+          keep_files: true   
