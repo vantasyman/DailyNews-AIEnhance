@@ -48,7 +48,7 @@ def get_unanalyzed_articles() -> List[Dict[str, Any]]:
 
         response = db.table("raw_articles").select(
             "article_id, title, snippet, tracked_topics(keyword)"
-        ).is_("l1_analysis_sentiment.analysis_id", "is", "null").execute()
+        ).is_("l1_analysis_sentiment.analysis_id", None).execute()
         
         articles = response.data
         tqdm.write(f"  > 成功获取 {len(articles)} 篇新文章待分析。")
