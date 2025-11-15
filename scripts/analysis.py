@@ -47,7 +47,7 @@ def get_unanalyzed_articles() -> List[Dict[str, Any]]:
         # WHERE s.analysis_id IS NULL;
 
         response = db.table("raw_articles").select(
-            "article_id, title, snippet, tracked_topics(keyword)"
+            "article_id, title, snippet, tracked_topics(keyword), l1_analysis_sentiment(analysis_id)"
         ).is_("l1_analysis_sentiment.analysis_id", None).execute()
         
         articles = response.data

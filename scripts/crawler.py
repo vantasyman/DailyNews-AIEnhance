@@ -11,9 +11,9 @@ from .db import get_db_client
 # -----------------------------------------------------------------
 # 常量定义 (Constants)
 # -----------------------------------------------------------------
-NEWS_API_BASE_URL = "https://newsapi.org/v2/everything"
+NEWS_API_BASE_URL = "https://newsapi.org/v2/top-headlines"
 # 为避免 API 滥用和控制 AI 成本，我们只取每个主题最新的 20 篇文章
-ARTICLES_PER_TOPIC = 50
+ARTICLES_PER_TOPIC = 30
 
 
 def fetch_topics_from_db() -> List[Dict[str, Any]]:
