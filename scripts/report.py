@@ -183,14 +183,34 @@ def main():
     
     # 1. 初始化 AI (不变)
     try:
-        l2_prompt_template = load_prompt()
-        prompt = ChatPromptTemplate.from_template(l2_prompt_template)
-        # 【重要】L2 AI 不再负责返回实体列表，它只返回摘要和分数
-        #    我们使用 L2ReportStructure 只是为了接收 AI 的部分，
-        #    然后在 generate_l2_report 中手动合并它们。
-        llm = ChatOpenAI(model=MODEL_NAME).with_structured_output(L2ReportStructure)
-        chain = prompt | llm
-        print(f"  > L2 AI 模型 ({MODEL_NAME}) 和提示词已加载。")
+        # 【新】导入 Pydantic 解析器
+        from langchain_core.output_parsers import PydanticOutputParser
+        
+        # 1. 加载原始提示词字符串
+        l2_prompt_template_str = load_prompt()
+        
+        # 2. 设置我们的解析器
+        parser = PydanticOutputParser(pydantic_object=L2ReportStructure)
+        
+        # 3. 从解析器获取 JSON 格式化指令
+        format_instructions = parser.get_format_instructions()
+        
+        # 4. 【关键】将格式化指令附加到原始提示词的末尾
+        l2_prompt_template_str += "\n\n{format_instructions}\n"
+        
+        # 5. 创建新的、包含格式化指令的 PromptTemplate
+        prompt = ChatPromptTemplate.from_template(
+            l2_prompt_template_str,
+            partial_variables={"format_instructions": format_instructions}
+        )
+        
+        # 6. 【修复】初始化 LLM，但*不*使用 .with_structured_output()
+        llm = ChatOpenAI(model=MODEL_NAME)
+        
+        # 7. 创建新的 chain
+        chain = prompt | llm | parser
+
+        print(f"  > L2 AI 模型 ({MODEL_NAME}) 和提示词已加载 (使用 PydanticParser)。")
     except Exception as e:
         print(f"🔴 致命错误: 无法初始化 L2 AI: {e}")
         return
