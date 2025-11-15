@@ -101,7 +101,7 @@ def save_articles_to_db(articles: List[Dict[str, Any]], topic_id: int):
         # on_conflict="url" 告诉数据库：如果 'url' 字段已存在，就忽略这行数据。
         # 'ignore_duplicates=True' 是 Supabase-Python 库的写法。
         # 这确保我们永远不会重复插入同一篇文章。
-        response = db.table("raw_articles").insert(
+        response = db.table("raw_articles").upsert(
             new_articles_to_insert, 
             on_conflict="url", 
             ignore_duplicates=True
