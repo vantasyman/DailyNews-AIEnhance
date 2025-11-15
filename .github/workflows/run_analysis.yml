@@ -7,7 +7,7 @@ on:
     - cron: '0 22 * * *'
 
 jobs:
-  # --- 任务 1: 后端自动化脚本 ---
+  # --- 任务 1: 后端自动化脚本 (保持不变) ---
   run-analysis:
     runs-on: ubuntu-latest
     steps:
@@ -45,7 +45,7 @@ jobs:
           
         run: python -m scripts.main
 
-  # --- 任务 2: 构建和部署前端 ---
+  # --- 任务 2: 构建和部署前端 (已添加调试步骤) ---
   deploy-pages:
     runs-on: ubuntu-latest
     needs: run-analysis # 确保在分析任务成功后才部署
@@ -57,10 +57,34 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
+      # --- [新增调试步骤 1] ---
+      # 打印变量，看看 GitHub Actions 在这一步到底读到了什么
+      - name: 'Debug: 打印变量'
+        run: |
+          echo "vars.SUPABASE_URL is: ${{ vars.SUPABASE_URL }}"
+          echo "vars.SUPABASE_ANON_KEY is: ${{ vars.SUPABASE_ANON_KEY }}"
+
+      # --- [新增调试步骤 2] ---
+      # 打印替换前的 js/supabase_client.js 文件内容
+      - name: 'Debug: 打印替换前的文件'
+        run: |
+          echo "--- Content before sed ---"
+          cat js/supabase_client.js
+          echo "--------------------------"
+
       - name: 替换前端 JS 中的占位符
         run: |
+          # 我们使用和之前完全一样的命令
           sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" js/supabase_client.js
           sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" js/supabase_client.js
+
+      # --- [新增调试步骤 3] ---
+      # 打印替换后的 js/supabase_client.js 文件内容
+      - name: 'Debug: 打印替换后的文件'
+        run: |
+          echo "--- Content after sed ---"
+          cat js/supabase_client.js
+          echo "-------------------------"
 
       - name: 部署到 GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
