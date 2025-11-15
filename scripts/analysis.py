@@ -131,8 +131,8 @@ def save_analysis_to_db(result: Dict[str, Any]):
                 for eid in entity_ids
             ]
 
-            # 插入连接表，'ignore_duplicates=True' 防止重复
-            db.table("article_entity_map").insert(
+# 插入连接表，'ignore_duplicates=True' 防止重复
+            db.table("article_entity_map").upsert(
                 map_data_to_insert,
                 on_conflict="article_id, entity_id",
                 ignore_duplicates=True
