@@ -1,10 +1,8 @@
 // js/supabase_client.js
 
-// 【修复】
-// 1. 不再 import '@supabase/supabase-js'。
-// 2. 'supabase' 全局变量由 index.html 中的 CDN 脚本提供。
-// 3. 我们从全局 'supabase' 对象中解构出 'createClient'。
-const { createClient } = supabase;
+// 1. 【修复】从全局的 'supabase' 对象 (来自CDN) 中解构
+//    我们明确使用 window.supabase 来避免命名冲突。
+const { createClient } = window.supabase;
 
 // ⬇️ 这些是将被 GitHub Action 自动替换的占位符
 const SUPABASE_URL = '%SUPABASE_URL%';
@@ -16,5 +14,8 @@ if (SUPABASE_URL.includes('%')) {
   );
 }
 
-// 4. 'createClient' 函数现在可用，因为我们已在第 6 行将其解构
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 2. 【修复】导出一个新名字的客户端，例如 'supabaseClient'
+//    这样就不会与全局的 'supabase' 变量冲突了。
+export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 注意：我已移除了你原始文件 末尾多余的 '}' 符号。
