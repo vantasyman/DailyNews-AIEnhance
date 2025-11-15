@@ -185,7 +185,10 @@ def main():
     except Exception as e:
         print(f"🔴 致命错误: 无法初始化 AI: {e}")
         return
-        
+    articles_to_process = get_unanalyzed_articles()
+    if not articles_to_process:
+        print("⏹️ 没有新文章需要分析。脚本退出。")
+        return
     print(f"  (Analysis Step 2/3) 开始使用 {MAX_WORKERS} 个并行线程处理 {len(articles_to_process)} 篇文章...")
     
     successful_analyses = 0
