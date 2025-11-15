@@ -7,7 +7,7 @@
 -- -------------------------------
 CREATE TABLE public.tracked_topics (
   topic_id SERIAL PRIMARY KEY,
-  keyword TEXT NOT KEY NULL UNIQUE,   -- 追踪的关键词, e.g., "NVIDIA", "原神"
+  keyword TEXT NOT NULL UNIQUE,   -- 追踪的关键词, e.g., "NVIDIA", "原神"
   category TEXT NOT NULL,         -- 用于分类, e.g., "财经", "游戏", "体育"
   is_active BOOLEAN DEFAULT true  -- 是否启用此关键词
 );
@@ -77,9 +77,35 @@ CREATE TABLE public.daily_reports (
   category TEXT NOT NULL,                 -- 报告的分类 (e.g., "财经", "游戏")
   report_summary TEXT,                    -- AI 生成的当日总结
   overall_sentiment_score FLOAT,        -- 当日该分类的平均情感
-  trending_entities JSONB,                -- 热门实体 (e.g., [{"name": "英伟达", "count": 25}])
+  trending_topics JSONB,                -- 热门实体 (e.g., [{"name": "英伟达", "count": 25}])
   generated_at TIMESTAMPTZ DEFAULT now(),
   
   -- 确保每天每个分类只有一份报告
   UNIQUE(report_date, category)
 );
+
+CREATE OR REPLACE VIEW public.daily_trending_entities
+AS
+SELECT
+  t.category,
+  e.entity_name AS topic,
+  count(a.article_id) AS count,
+  avg(s.sentiment_score) AS average_sentiment
+FROM public.l1_analysis_entities e
+  -- 找到所有提到该实体的文章
+  JOIN public.article_entity_map m ON e.entity_id = m.entity_id
+  -- 获取文章的L1情感分数
+  JOIN public.l1_analysis_sentiment s ON m.article_id = s.article_id
+  -- 获取文章的元数据（用于过滤时间和分类）
+  JOIN public.raw_articles a ON m.article_id = a.article_id
+  -- 获取分类
+  JOIN public.tracked_topics t ON a.topic_id = t.topic_id
+WHERE
+  -- 仅限过去 24 小时的分析
+  s.analyzed_at >= (now() - '1 day'::interval)
+GROUP BY
+  t.category,
+  e.entity_name
+ORDER BY
+  t.category,
+  count DESC;

@@ -28,7 +28,7 @@ jobs:
       - name: Run Python Automation Pipeline
         env:
           # --- 数据库密钥 (来自 GitHub Secrets) ---
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           
           # --- API 密钥 (来自 GitHub Secrets) ---

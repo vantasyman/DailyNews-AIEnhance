@@ -67,9 +67,8 @@ CREATE POLICY "Allow public read-access to reports" ON public.daily_reports
 -- -------------------------------
 
 -- 授予权限：
-GRANT SELECT ON public.tracked_topics TO crawler_role;  -- 读配置
-GRANT INSERT ON public.raw_articles TO crawler_role;     -- 写文章
 
+GRANT SELECT, INSERT, UPDATE ON public.tracked_topics TO crawler_role;
 -- 创建策略：
 CREATE POLICY "Allow crawler to read active topics" ON public.tracked_topics
   FOR SELECT TO crawler_role USING (is_active = true); -- 只能读 "is_active" 的配置
@@ -84,7 +83,7 @@ CREATE POLICY "Allow crawler to insert new articles" ON public.raw_articles
 -- -------------------------------
 
 -- 授予权限：
-GRANT SELECT ON public.raw_articles TO analyzer_role; -- 读 L0
+GRANT SELECT, INSERT, UPDATE ON public.daily_reports TO analyzer_role; -- 读 L0
 GRANT SELECT, INSERT ON public.l1_analysis_sentiment TO analyzer_role; -- 写 L1 情感
 GRANT SELECT, INSERT ON public.l1_analysis_entities TO analyzer_role;  -- 读/写 L1 实体 (需要读以防重复)
 GRANT SELECT, INSERT ON public.article_entity_map TO analyzer_role;    -- 写 L1 关系

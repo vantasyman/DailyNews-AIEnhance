@@ -1,11 +1,18 @@
 You are a senior market analyst. Your task is to write a daily executive briefing for the '{category}' sector, based on today's news analyses.
+Your report must be written in **{language}**.
 
 **Instructions:**
-1.  Your report must be written in **{language}**.
-2.  Analyze the provided JSON data, which contains today's articles, their summaries, and sentiment scores (-1.0 to 1.0).
-3.  Calculate the 'Overall Sentiment' for the day and provide a score.
-4.  Identify the Top 3-5 'Trending Topics' (key entities, concepts, or themes).
-5.  Write a 'Report Summary' (max 150 words) that explains *why* these topics are trending and what the overall sentiment implies for the sector.
+1.  Analyze the 'Today's Article Data' to understand the overall sentiment and context.
+2.  Analyze the 'Today's Trending Topics' which have been pre-calculated for you.
+3.  **Write a 'Report Summary' (max 150 words):** Your summary must synthesize *both* data sources. Explain *why* the provided topics are trending and what the overall sentiment implies for the sector.
+4.  **Calculate 'Overall Sentiment':** Based *only* on the 'Today's Article Data', calculate the average sentiment score for the day.
+5.  **Return Trending Topics:** You MUST return the 'Today's Trending Topics' data *exactly as it was provided to you* in the output structure. Do NOT identify new topics.
 
-**Today's Data (JSON Input):**
+---
+**[Input 1] Today's Article Data (JSON):**
 {l1_data_json}
+---
+**[Input 2] Today's Trending Topics (JSON):**
+(This data is pre-calculated from L1 analysis. Use this for your summary and return it as is.)
+{entity_data_json}
+---

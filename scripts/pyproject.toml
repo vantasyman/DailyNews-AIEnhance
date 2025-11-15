@@ -25,4 +25,4 @@ dependencies = [
 ]
 
 [project.license]
-text = "Apache-2.0" # 暂时沿用，请确保你遵循原仓库的 LICENSE 要求
+text = "MIT" # 暂时沿用，请确保你遵循原仓库的 LICENSE 要求
