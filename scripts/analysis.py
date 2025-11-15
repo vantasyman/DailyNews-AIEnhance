@@ -99,12 +99,12 @@ def save_analysis_to_db(result: Dict[str, Any]):
 
     try:
         # 1. 写入 'l1_analysis_sentiment' 表 (表 3)
-        db.table("l1_analysis_sentiment").insert({
+        db.table("l1_analysis_sentiment").upsert({
             "article_id": article_id,
             "ai_summary": analysis.ai_summary,
             "sentiment_score": analysis.sentiment_score,
             "sentiment_label": analysis.sentiment_label
-        }).execute()
+        }, on_conflict="article_id").execute()
         
         # 2. & 3. 写入 'l1_analysis_entities' (表 4) 和 'article_entity_map' (表 5)
         if analysis.entities:
