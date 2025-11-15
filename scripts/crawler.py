@@ -11,7 +11,7 @@ from .db import get_db_client
 # -----------------------------------------------------------------
 # 常量定义 (Constants)
 # -----------------------------------------------------------------
-NEWS_API_BASE_URL = "https://newsapi.org/v2/top-headlines"
+NEWS_API_BASE_URL = "https://gnews.io/api/v4/search"
 # 为避免 API 滥用和控制 AI 成本，我们只取每个主题最新的 20 篇文章
 ARTICLES_PER_TOPIC = 30
 
@@ -47,12 +47,10 @@ def fetch_articles_from_api(topic: Dict[str, Any], api_key: str) -> List[Dict[st
     yesterday = (datetime.now() - timedelta(days=1)).isoformat()
     
     params = {
-        "q": query,
-        "language": "zh", # 优先中文，你可以修改为 'en'
-        "from": yesterday,
-        "sortBy": "relevance", # 按相关性排序
-        "pageSize": ARTICLES_PER_TOPIC,
-        "apiKey": api_key
+        "token": api_key,
+        "q": query, # query 变量 (e.g., '"NVIDIA"') 保持不变
+        "max": ARTICLES_PER_TOPIC,
+        "in": "title,description" # 仅搜索标题和描述
     }
 
     try:
