@@ -11,27 +11,44 @@ let currentVisibleCategory = null; // 当前显示的分类
 // 2. DOM 加载完毕
 document.addEventListener('DOMContentLoaded', () => {
   // 获取模态框 DOM 元素
-  modalOverlay = document.getElementById('drilldown-modal');
-  modalBody = document.getElementById('modal-body');
+  modalOverlay = document.getElementById('drilldown-modal'); // 确保 ID 正确
+  modalBody = document.getElementById('modal-body');         // 确保 ID 正确
   const modalCloseBtn = document.getElementById('modal-close-btn');
 
   // 绑定模态框关闭事件
-  modalCloseBtn.addEventListener('click', hideModal);
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) {
-      hideModal();
-    }
-  });
+  if (modalCloseBtn) { // 添加检查，防止元素不存在
+      modalCloseBtn.addEventListener('click', hideModal);
+  }
+  if (modalOverlay) { // 添加检查
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) { // 只有点击蒙层背景时才关闭
+          hideModal();
+        }
+      });
+  }
 
   // 运行主函数
   loadAllDailyReports();
 });
 
 // --- 模态框控制函数 (不变) ---
-function showModal() { /* ... (代码不变) ... */ }
-function hideModal() { /* ... (代码不变) ... */ }
-// ... (复制粘贴你原来的 showModal 和 hideModal 函数) ...
+function showModal() {
+  if (modalOverlay) {
+    modalOverlay.style.display = 'flex'; // 使用 flex 方便居中
+    document.body.classList.add('no-scroll'); // 防止背景滚动
+  }
+}
 
+function hideModal() {
+  if (modalOverlay) {
+    modalOverlay.style.display = 'none';
+    document.body.classList.remove('no-scroll');
+  }
+  // 清空模态框内容，以防下次打开看到旧内容
+  if (modalBody) {
+    modalBody.innerHTML = ''; 
+  }
+}
 // 3. 【重构】获取“所有”今日报告
 async function loadAllDailyReports() {
   const loadingSpinner = document.getElementById('loading-spinner');
@@ -208,8 +225,10 @@ function renderTreemap(topicsData, category) {
     .enter().append("g")
     .attr("class", "treemap-cell")
     .attr("transform", d => `translate(${d.x0},${d.y0})`)
-    .on("click", (event, d) => { 
-      showTopicModal(d.data, category, currentReport.report_summary);
+    .on("click", (event, d) => { // ⬅️ 确保这里有 .on("click", ...)
+      // 这里的 `category` 参数应该从 `renderTreemap` 的外部传入
+      // currentVisibleCategory 是全局变量，可以直接用
+      showTopicModal(d.data, currentVisibleCategory, reportMap.get(currentVisibleCategory).report_summary);
     });
 
   // 9. 为方块添加带颜色的矩形 (不变)
@@ -222,17 +241,38 @@ function renderTreemap(topicsData, category) {
 
   // 10. 为方块添加文字
   cell.append("text")
-    .attr("class", "treemap-text")
-    .selectAll("tspan")
-    .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g)) // 简单的词换行
-    .enter().append("tspan")
-    .attr("x", 4)
-    .attr("y", (d, i) => 15 + i * 15) // 逐行显示
-    .text(d => d);
+    .attr("x", d => (d.x1 - d.x0) / 2) // 中心点X
+    .attr("y", d => (d.y1 - d.y0) / 2) // 中心点Y
+    .attr("dy", "-0.7em") // 向上偏移一些，为第二个文本腾出空间
+    .attr("text-anchor", "middle") // 文字居中
+    .attr("class", "topic-name")
+    .text(d => {
+      // 检查区块大小，如果太小则不显示名称
+      if (d.x1 - d.x0 < 60 || d.y1 - d.y0 < 30) return ""; 
+      return truncateText(d.data.name, d.x1 - d.x0, 14); // 尝试截断文字
+    });
 
-  // 11. (可选) 添加 tooltip
-  cell.append("title")
-    .text(d => `${d.data.name}\n提及次数: ${d.data.value}\n平均情感: ${d.data.sentiment.toFixed(2)}`);
+  cell.append("text")
+    .attr("x", d => (d.x1 - d.x0) / 2) // 中心点X
+    .attr("y", d => (d.y1 - d.y0) / 2) // 中心点Y
+    .attr("dy", "0.6em") // 向下偏移一些
+    .attr("text-anchor", "middle") // 文字居中
+    .attr("class", "topic-value")
+    .text(d => {
+      // 检查区块大小，如果太小则不显示值
+      if (d.x1 - d.x0 < 60 || d.y1 - d.y0 < 30) return ""; 
+      return `文章数: ${d.data.value}`; // 显示文章数量
+    });
+  
+  // 【新增辅助函数】用于截断文本
+  function truncateText(text, width, fontSize) {
+    const charWidth = fontSize * 0.6; // 估算每个字符的宽度
+    const maxChars = Math.floor(width / charWidth);
+    if (text.length > maxChars && maxChars > 5) { // 至少保留5个字符
+      return text.substring(0, maxChars - 3) + "...";
+    }
+    return text;
+ }
 }
 
 

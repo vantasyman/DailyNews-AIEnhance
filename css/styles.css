@@ -321,3 +321,62 @@ footer {
   border-color: var(--primary-color);
   box-shadow: var(--shadow-sm);
 }
+
+/* --- Treemap 样式 --- */
+#treemap-container {
+  /* 确保容器有高度 */
+  min-height: 400px; 
+  background-color: var(--card-bg-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+  margin-top: 20px;
+  overflow: hidden; /* 隐藏溢出内容 */
+  position: relative; /* 确保子元素定位正确 */
+}
+
+#treemap-container svg {
+  display: block; /* 移除 svg 底部默认空白 */
+  /* 我们在 JS 中已经设置了 width: 100%, height: auto; */
+}
+
+/* 热力图单个区块的容器 */
+.treemap-cell {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.treemap-cell:hover {
+  transform: scale(1.02); /* 悬停时略微放大 */
+  z-index: 1; /* 确保悬停的区块在上面 */
+  box-shadow: var(--shadow-lg); /* 悬停时添加更明显的阴影 */
+}
+
+/* 热力图区块的矩形 */
+.treemap-cell rect {
+  stroke-width: 1px;
+  fill-opacity: 0.9; /* 稍微透明 */
+  rx: var(--radius-sm); /* 圆角 */
+  ry: var(--radius-sm); /* 圆角 */
+  transition: fill-opacity 0.2s ease-in-out;
+}
+
+.treemap-cell:hover rect {
+  fill-opacity: 1; /* 悬停时完全不透明 */
+}
+
+/* 热力图区块的文字 */
+.treemap-cell text {
+  font-family: 'Inter', sans-serif;
+  fill: var(--text-color-inverted); /* 文字颜色，假设背景是深色 */
+  font-weight: 600; /* 加粗 */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* 文字阴影，增加可读性 */
+  pointer-events: none; /* 确保点击穿透到 rect */
+}
+
+.treemap-cell .topic-name {
+  font-size: 14px; /* 话题名称字号 */
+}
+.treemap-cell .topic-value {
+  font-size: 11px; /* 数量字号 */
+}
