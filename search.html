@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 趋势分析 - 搜索</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <a href="index.html" class="site-logo">
+                    <img src="assets/logo.png" alt="Logo" class="logo-image">
+                    <span class="site-title">AI 趋势分析引擎</span>
+                </a>
+                <div class="header-controls">
+                    <a href="index.html" class="icon-button" title="首页 (Home)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="report-header">
+                <h1>搜索历史文章</h1>
+                <p>在所有 L1 分析报告中搜索关键词</p>
+            </div>
+
+            <div class="search-bar-container" style="margin-bottom: 32px; text-align: center;">
+                <input type="search" id="search-input" placeholder="例如: NVIDIA, Blackwell, 财报..." style="width: 70%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button id="search-button" class="modal-back-btn" style="padding: 12px; margin-left: 8px;">搜索</button>
+            </div>
+
+            <div id="loading-spinner" class="loading-container" style="display: none;">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="error-message" class="error-container" style="display: none;"></div>
+            
+            <div id="results-container" class="report-section">
+                </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 AI 趋势分析引擎。</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/supabase_client.js"></script>
+    <script type="module" src="js/search.js"></script>
+</body>
+</html>

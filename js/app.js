@@ -1,21 +1,21 @@
-// js/app.js
-
-// 1. 从我们的 supabase_client.js 模块中导入客户端
 import { supabaseClient as supabase } from './supabase_client.js';
 
-// --- [新增] 全局变量 ---
+// --- 全局变量 ---
 let modalOverlay;
 let modalBody;
-let currentReport = null; // 存储当前加载的 L2 报告
+// let currentReport = null; // <- 不再需要，改为 reportMap
+let reportMap = new Map(); // 存储所有报告，按分类索引
+let currentVisibleCategory = null; // 当前显示的分类
 
-// 2. DOM 加载完毕后，立即执行主函数
+
+// 2. DOM 加载完毕
 document.addEventListener('DOMContentLoaded', () => {
-  // [新增] 获取模态框 DOM 元素
+  // 获取模态框 DOM 元素
   modalOverlay = document.getElementById('drilldown-modal');
   modalBody = document.getElementById('modal-body');
   const modalCloseBtn = document.getElementById('modal-close-btn');
 
-  // [新增] 绑定模态框关闭事件
+  // 绑定模态框关闭事件
   modalCloseBtn.addEventListener('click', hideModal);
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) {
@@ -24,30 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 运行主函数
-  loadDailyReport();
+  loadAllDailyReports();
 });
 
-// --- [新增] 模态框控制函数 ---
-function showModal() {
-  modalOverlay.style.display = 'flex';
-  setTimeout(() => {
-    modalOverlay.style.opacity = 1;
-    modalOverlay.querySelector('.modal-content').style.transform = 'scale(1)';
-  }, 10);
-}
+// --- 模态框控制函数 (不变) ---
+function showModal() { /* ... (代码不变) ... */ }
+function hideModal() { /* ... (代码不变) ... */ }
+// ... (复制粘贴你原来的 showModal 和 hideModal 函数) ...
 
-function hideModal() {
-  modalOverlay.style.opacity = 0;
-  modalOverlay.querySelector('.modal-content').style.transform = 'scale(0.9)';
-  setTimeout(() => {
-    modalOverlay.style.display = 'none';
-    modalBody.innerHTML = '<div class="loading-spinner"></div>'; // 清空内容
-  }, 300);
-}
-
-// 3. 定义主函数：获取并渲染数据 (已合并)
-async function loadDailyReport() {
-  // 从原始 app.js 中获取所有 DOM 元素
+// 3. 【重构】获取“所有”今日报告
+async function loadAllDailyReports() {
   const loadingSpinner = document.getElementById('loading-spinner');
   const errorMessage = document.getElementById('error-message');
   const reportDateEl = document.getElementById('report-date');
@@ -55,47 +41,37 @@ async function loadDailyReport() {
   const treemapEl = document.getElementById('treemap-container');
 
   try {
-    // 隐藏错误，显示加载
     loadingSpinner.style.display = 'flex';
     errorMessage.style.display = 'none';
     treemapEl.style.display = 'none';
     summaryEl.style.display = 'none';
 
-    // 4. 【核心查询】(来自原始 app.js)
+    // 4. 【核心查询修改】获取过去 24h 的所有报告，不再 limit(1)
+    const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString();
+
     const { data, error } = await supabase
       .from('daily_reports')
       .select('*')
-      .order('report_date', { ascending: false })
-      .limit(1);
+      .gte('report_date', yesterday) // 大于等于 24h 前
+      .order('category', { ascending: true }); // 按分类名排序
 
-    if (error) throw error; // 抛出错误，被 catch 捕获
+    if (error) throw error;
 
     if (!data || data.length === 0) {
       throw new Error("数据库中没有找到任何报告。请先运行后端自动化脚本 (GitHub Action)。");
     }
 
-    // 5. [修改] 渲染数据，使用全局变量
-    currentReport = data[0]; // 获取最新的报告并存入全局
-
-    // 格式化日期
-    const date = new Date(currentReport.report_date);
-    reportDateEl.textContent = `报告日期: ${date.toLocaleDateString()}`;
-
-    // 渲染 L2 报告摘要 (支持换行符)
-    summaryEl.innerHTML = currentReport.report_summary.replace(/\n/g, '<br />');
+    // 5. 渲染 Tab
+    renderCategoryTabs(data);
     
-    // 6. 渲染“热点预览图”
-    if (currentReport.trending_topics && currentReport.trending_topics.length > 0) {
-      treemapEl.style.display = 'block';
-      // [修改] 传入 L2 报告的分类
-      renderTreemap(currentReport.trending_topics, currentReport.category);
-    } else {
-      treemapEl.innerHTML = "<p>今日无热点话题数据。</p>";
+    // 6. 默认显示第一个报告
+    if (data.length > 0) {
+      renderReportDetails(data[0].category);
     }
-
-    // 隐藏加载，显示内容
+    
     loadingSpinner.style.display = 'none';
     summaryEl.style.display = 'block';
+    treemapEl.style.display = 'block'; // 确保 treemap 容器可见
 
   } catch (error) {
     console.error('加载报告失败:', error.message);
@@ -105,67 +81,144 @@ async function loadDailyReport() {
   }
 }
 
+// 4. 【新增】渲染分类 Tab
+function renderCategoryTabs(reportsData) {
+    const tabsContainer = document.getElementById('category-tabs-container');
+    tabsContainer.innerHTML = ''; // 清空
+    reportMap.clear(); // 清空旧数据
+
+    reportsData.forEach((report, index) => {
+        // 存储报告数据
+        reportMap.set(report.category, report);
+
+        // 创建 Tab 按钮
+        const tab = document.createElement('div');
+        tab.className = 'category-tab';
+        tab.textContent = report.category;
+        tab.dataset.category = report.category;
+        
+        // 默认激活第一个
+        if (index === 0) {
+            tab.classList.add('active');
+            currentVisibleCategory = report.category;
+        }
+
+        // 添加点击事件
+        tab.addEventListener('click', () => {
+            // 移除所有 Tab 的 active 状态
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            // 激活当前点击的
+            tab.classList.add('active');
+            // 渲染该分类的数据
+            renderReportDetails(report.category);
+        });
+        
+        tabsContainer.appendChild(tab);
+    });
+}
+
+// 5. 【新增】渲染特定分类的报告详情
+function renderReportDetails(category) {
+    const report = reportMap.get(category);
+    if (!report) return;
+
+    currentVisibleCategory = category; // 更新全局状态
+    
+    // 获取 DOM 元素
+    const titleEl = document.getElementById('report-title');
+    const dateEl = document.getElementById('report-date');
+    const summaryEl = document.getElementById('report-summary');
+    const treemapEl = document.getElementById('treemap-container');
+
+    // 1. 渲染标题和日期
+    titleEl.textContent = `${report.category} - 今日热点简报`;
+    const date = new Date(report.report_date);
+    dateEl.textContent = `报告日期: ${date.toLocaleDateString()}`;
+
+    // 2. 渲染 L2 报告摘要
+    summaryEl.innerHTML = report.report_summary.replace(/\n/g, '<br />');
+    
+    // 3. 渲染“热点预览图”
+    if (report.trending_topics && report.trending_topics.length > 0) {
+      treemapEl.style.display = 'block';
+      renderTreemap(report.trending_topics, report.category); // 调用我们修改过的 treemap 函数
+    } else {
+      treemapEl.innerHTML = "<p>今日无热点话题数据。</p>";
+      treemapEl.style.display = 'block';
+    }
+}
+
 // 7. 【“惊艳”核心】使用 D3.js 渲染热点预览图 (Treemap)
 // [修改] 接收 category 参数
+// 7. 【“惊艳”核心】使用 D3.js 渲染热点预览图 (Treemap)
 function renderTreemap(topicsData, category) {
-  // 1. 准备 D3 Treemap 需要的数据格式
+  // 1. 准备 D3 Treemap 需要的数据格式 (不变)
   const root = {
     name: "root",
     children: topicsData.map(topic => ({
       name: topic.topic,
-      value: topic.count, // 'value' 决定方块大小
-      sentiment: topic.average_sentiment // 自定义数据，用于着色
+      value: topic.count, 
+      sentiment: topic.average_sentiment 
     }))
   };
 
   // 2. 设置 Treemap 尺寸
   const container = document.getElementById('treemap-container');
-  const width = container.clientWidth;
-  const height = 400; // 固定高度
+  // 【修复】我们不再读取 clientWidth，而是使用一个固定的“画布”尺寸
+  const width = 1000; // 假设我们的理想宽度是 1000px
+  const height = 600; // 假设我们的理想高度是 600px
 
-  // 3. 创建颜色比例尺
+  // 3. 创建颜色比例尺 (不变)
   const colorScale = d3.scaleLinear()
     .domain([-1.0, 0, 1.0])
     .range(["#d90000", "#aaa", "#009e49"]); // 红 -> 灰 -> 绿
 
-  // 4. 初始化 Treemap
+  // 4. 初始化 Treemap (不变)
   const treemap = d3.treemap()
     .size([width, height])
-    .padding(2); // 方块间的间距
+    .padding(2); 
 
-  // 5. 生成层级数据
+  // 5. 生成层级数据 (不变)
   const hierarchy = d3.hierarchy(root)
-    .sum(d => d.value) // 告诉 D3 使用 'value' 字段来计算大小
+    .sum(d => d.value) 
     .sort((a, b) => b.value - a.value);
 
-  // 6. 计算 Treemap 布局
+  // 6. 计算 Treemap 布局 (不变)
   const treeData = treemap(hierarchy);
 
   // 7. 清空容器并创建 SVG
   d3.select("#treemap-container").selectAll("*").remove(); // 清空旧图
+  
+  // ⬇️ --- 【核心修复】 --- ⬇️
   const svg = d3.select("#treemap-container")
     .append("svg")
-    .attr("width", width)
-    .attr("height", height);
+    // 1. 设置 "viewBox"，告诉 SVG 我们的“内部坐标系”
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    // 2. 移除固定的 width/height 属性，让 CSS 来控制它
+    // .attr("width", width)  <- 移除
+    // .attr("height", height) <- 移除
+    // 3. (可选) 添加 CSS 样式以确保它占满容器
+    .style("width", "100%")
+    .style("height", "auto"); 
+  // ⬆️ --- 【核心修复】 --- ⬆️
 
-  // 8. [修改] 绘制所有方块 (cell)，并添加点击事件
+  // 8. 绘制所有方块 (cell) (不变)
   const cell = svg.selectAll("g")
-    .data(treeData.leaves()) // leaves() 只获取最底层的方块
+    .data(treeData.leaves()) 
     .enter().append("g")
     .attr("class", "treemap-cell")
     .attr("transform", d => `translate(${d.x0},${d.y0})`)
-    .on("click", (event, d) => { // ⬅️ [核心新增] 添加点击事件
-      // d.data 包含了 {name, value, sentiment}
-      // 我们还需要 L2 摘要，它在 currentReport
+    .on("click", (event, d) => { 
       showTopicModal(d.data, category, currentReport.report_summary);
     });
 
-  // 9. 为方块添加带颜色的矩形
+  // 9. 为方块添加带颜色的矩形 (不变)
   cell.append("rect")
     .attr("width", d => d.x1 - d.x0)
     .attr("height", d => d.y1 - d.y0)
-    .attr("fill", d => colorScale(d.data.sentiment)) // ⬅️ 用情感分数上色
+    .attr("fill", d => colorScale(d.data.sentiment)) 
     .attr("stroke", "white");
+
 
   // 10. 为方块添加文字
   cell.append("text")

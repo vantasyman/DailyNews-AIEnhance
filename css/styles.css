@@ -299,3 +299,25 @@ footer {
   font-weight: 500;
   margin-bottom: 20px;
 }
+
+/* [新增] 分类 Tab 样式 */
+.category-tab {
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 0 5px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+.category-tab:hover {
+  background-color: var(--background-color);
+}
+.category-tab.active {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
