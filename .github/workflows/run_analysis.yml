@@ -50,21 +50,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: run-analysis
     
-    # 【修改】我们不再需要写入 main 分支的权限，可以移除 permissions
-    # permissions:
-    #   contents: write 
+    # ⬇️ 【最终修复】重新添加这个权限模块 ⬇️
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
-
-      # 你的调试步骤很好，我们保留它
-      - name: 🔍 调试：验证仓库文件存在
-        run: |
-          pwd
-          ls -R | head -n 200
-          echo "===== 确认 js 文件存在 ====="
-          find . -name supabase_client.js
 
       - name: ⚙️ 替换前端占位符
         run: |
@@ -75,12 +67,9 @@ jobs:
           echo "--- 替换后 ---"
           grep SUPABASE_URL js/supabase_client.js || true
 
-      # 【修改】这是方案一的部署步骤
       - name: 🚀 部署到 gh-pages 分支
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./         # 部署目录：仓库根目录
-          # 【移除】 publish_branch: main  (移除此行，动作将自动推送到 gh-pages)
-          # 【移除】 keep_files: true       (移除此行，以进行“干净”部署)
+          publish_dir: ./
           allow_empty_commit: true
