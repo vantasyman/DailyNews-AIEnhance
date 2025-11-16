@@ -37,28 +37,30 @@ ALTER TABLE public.daily_reports ENABLE ROW LEVEL SECURITY;
 -- -------------------------------
 
 -- 授予权限：只允许 SELECT (读取)
-GRANT SELECT ON public.raw_articles TO public_api_role;
-GRANT SELECT ON public.l1_analysis_sentiment TO public_api_role;
-GRANT SELECT ON public.l1_analysis_entities TO public_api_role;
-GRANT SELECT ON public.article_entity_map TO public_api_role;
-GRANT SELECT ON public.daily_reports TO public_api_role;
+
+
+GRANT SELECT ON public.raw_articles TO anon;
+GRANT SELECT ON public.l1_analysis_sentiment TO anon;
+GRANT SELECT ON public.l1_analysis_entities TO anon;
+GRANT SELECT ON public.article_entity_map TO anon;
+GRANT SELECT ON public.daily_reports TO anon;
 -- (注意：我们故意“不”授予对 'tracked_topics' 的读取权限，因为这是内部配置)
 
 -- 创建策略：允许 public_api_role 读取所有行
 CREATE POLICY "Allow public read-access to articles" ON public.raw_articles
-  FOR SELECT TO public_api_role USING (true);
+  FOR SELECT TO anon USING (true);
   
 CREATE POLICY "Allow public read-access to sentiment" ON public.l1_analysis_sentiment
-  FOR SELECT TO public_api_role USING (true);
+  FOR SELECT TO anon USING (true);
   
 CREATE POLICY "Allow public read-access to entities" ON public.l1_analysis_entities
-  FOR SELECT TO public_api_role USING (true);
+  FOR SELECT TO anon USING (true);
   
 CREATE POLICY "Allow public read-access to map" ON public.article_entity_map
-  FOR SELECT TO public_api_role USING (true);
+  FOR SELECT TO anon USING (true);
 
 CREATE POLICY "Allow public read-access to reports" ON public.daily_reports
-  FOR SELECT TO public_api_role USING (true);
+  FOR SELECT TO anon USING (true);
 
 
 -- -------------------------------
