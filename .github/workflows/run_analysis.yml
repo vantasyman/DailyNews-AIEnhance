@@ -1,0 +1,86 @@
+# .github/workflows/run_analysis.yml
+name: AI Trend Analysis & Deploy Pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 22 * * *'
+
+jobs:
+  # --- 任务 1: 后端自动化脚本 (保持不变) ---
+  run-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv pip install -r scripts/pyproject.toml --system
+
+      - name: Run Python Automation Pipeline
+        env:
+          # --- 数据库密钥 (来自 GitHub Secrets) ---
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          
+          # --- API 密钥 (来自 GitHub Secrets) ---
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          
+          # --- 配置 (来自 GitHub Variables) ---
+          MODEL_NAME: ${{ vars.MODEL_NAME || 'deepseek-chat' }}
+          LANGUAGE: ${{ vars.LANGUAGE || 'Chinese' }}
+          
+          # ⬇️ 【新增】将 GitHub Variable 注入到环境变量中
+          TRACKED_TOPICS: ${{ vars.TRACKED_TOPICS || '' }}
+          
+        run: python -m scripts.main
+
+  # --- 任务 2: 构建和部署前端 (修改为方案一) ---
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: run-analysis
+    
+    # 【修改】我们不再需要写入 main 分支的权限，可以移除 permissions
+    # permissions:
+    #   contents: write 
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      # 你的调试步骤很好，我们保留它
+      - name: 🔍 调试：验证仓库文件存在
+        run: |
+          pwd
+          ls -R | head -n 200
+          echo "===== 确认 js 文件存在 ====="
+          find . -name supabase_client.js
+
+      - name: ⚙️ 替换前端占位符
+        run: |
+          echo "--- 替换前 ---"
+          grep SUPABASE_URL js/supabase_client.js || true
+          sed -i "s|%SUPABASE_URL%|${{ vars.SUPABASE_URL }}|g" js/supabase_client.js
+          sed -i "s|%SUPABASE_ANON_KEY%|${{ vars.SUPABASE_ANON_KEY }}|g" js/supabase_client.js
+          echo "--- 替换后 ---"
+          grep SUPABASE_URL js/supabase_client.js || true
+
+      # 【修改】这是方案一的部署步骤
+      - name: 🚀 部署到 gh-pages 分支
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./         # 部署目录：仓库根目录
+          # 【移除】 publish_branch: main  (移除此行，动作将自动推送到 gh-pages)
+          # 【移除】 keep_files: true       (移除此行，以进行“干净”部署)
+          allow_empty_commit: true
