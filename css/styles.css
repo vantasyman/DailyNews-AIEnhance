@@ -1,6 +1,3 @@
-/* css/styles.css - 借鉴自原仓库的现代风格 */
-
-/* 1. 颜色和变量 (借鉴) */
 :root {
   --primary-color: #667eea;
   --secondary-color: #764ba2;
@@ -9,20 +6,44 @@
   --card-bg-color: #ffffff;
   --text-color: #1e293b;
   --text-secondary: #475569;
+  --text-color-inverted: #ffffff;
   --border-color: #e2e8f0;
   --shadow-sm: 0 1px 3px rgba(102, 126, 234, 0.1);
   --shadow-md: 0 4px 15px rgba(102, 126, 234, 0.15);
+  --shadow-lg: 0 10px 25px -5px rgba(102, 126, 234, 0.2), 0 8px 10px -6px rgba(102, 126, 234, 0.2);
+  --radius-sm: 8px;
   --radius-md: 12px;
-  --transition: all 0.2s ease;
+  --radius-lg: 16px;
+  --transition: all 0.3s ease;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.95); }
+  to { transform: scale(1); }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .app-container {
@@ -31,12 +52,11 @@ body {
   min-height: 100vh;
 }
 
-/* 2. 页头 (借鉴) */
 header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
 }
@@ -58,7 +78,11 @@ header {
   text-decoration: none;
   color: var(--text-color);
 }
-.logo-image { height: 36px; }
+
+.logo-image {
+  height: 36px;
+}
+
 .site-title {
   font-size: 20px;
   font-weight: 600;
@@ -67,17 +91,27 @@ header {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.header-controls { display: flex; gap: 16px; }
+
+.header-controls {
+  display: flex;
+  gap: 16px;
+}
+
 .icon-button {
   color: var(--primary-color);
   background: none;
   border: none;
   cursor: pointer;
   padding: 4px;
+  transition: var(--transition);
+  border-radius: 50%;
 }
-.icon-button:hover { background-color: rgba(102, 126, 234, 0.1); border-radius: 50%; }
 
-/* 3. 主内容区域 */
+.icon-button:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+  transform: scale(1.1);
+}
+
 main {
   flex: 1;
   padding: 24px;
@@ -90,17 +124,18 @@ main {
   text-align: center;
   margin-bottom: 32px;
 }
+
 .report-header h1 {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 8px;
 }
+
 .report-header p {
   font-size: 16px;
   color: var(--text-secondary);
 }
 
-/* 4. 加载和错误 (借鉴) */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -109,16 +144,22 @@ main {
   padding: 40px;
   color: var(--text-secondary);
 }
+
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  border: 4px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
   border-top-color: var(--primary-color);
   animation: spinner 1s linear infinite;
   margin-bottom: 16px;
 }
-@keyframes spinner { to { transform: rotate(360deg); } }
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .error-container {
   padding: 20px;
@@ -129,11 +170,13 @@ main {
   text-align: center;
 }
 
-/* 5. 报告和热点图样式 (新) */
-.treemap-section, .report-section {
+.treemap-section,
+.report-section {
   margin-bottom: 32px;
 }
-.treemap-section h2, .report-section h2 {
+
+.treemap-section h2,
+.report-section h2 {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 16px;
@@ -143,59 +186,67 @@ main {
 
 .report-card {
   background-color: var(--card-bg-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 24px;
   font-size: 16px;
   line-height: 1.7;
 }
 
-/* "热点预览图" (D3 Treemap) 样式 */
 #treemap-container {
   width: 100%;
   min-height: 400px;
   background-color: var(--card-bg-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   position: relative;
+  padding: 12px;
 }
+
 .treemap-cell {
-  border: 1px solid var(--background-color);
+  border: 2px solid var(--card-bg-color);
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 6px;
-  transition: transform 0.2s ease;
+  transition: var(--transition);
   cursor: pointer;
+  border-radius: var(--radius-sm);
 }
+
 .treemap-cell:hover {
-  transform: scale(1.02);
   z-index: 10;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
 }
+
 .treemap-text {
   color: white;
   font-weight: 500;
   font-size: 14px;
-  text-shadow: 0 0 4px rgba(0,0,0,0.5);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
-/* 6. 页脚 (借鉴) */
 footer {
   border-top: 1px solid var(--border-color);
   padding: 24px;
   margin-top: auto;
 }
+
 .footer-content {
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
-  color: #94a3b8; /* text-tertiary */
+  color: #94a3b8;
   font-size: 14px;
 }
-.footer-content a { color: var(--primary-color); }
 
+.footer-content a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+.footer-content a:hover {
+  text-decoration: underline;
+}
 
-/* [新增] 模态框样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -204,29 +255,27 @@ footer {
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(5px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  animation: fadeIn 0.3s ease forwards;
 }
 
 .modal-content {
   background: var(--card-bg-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   width: 90%;
   max-width: 800px;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
   padding: 32px;
-  transform: scale(0.9);
-  transition: transform 0.3s ease;
+  animation: zoomIn 0.3s ease forwards;
 }
 
-.modal-close {
+.modal-close-btn {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -235,6 +284,12 @@ footer {
   font-size: 28px;
   color: var(--text-secondary);
   cursor: pointer;
+  transition: var(--transition);
+}
+
+.modal-close-btn:hover {
+  color: var(--text-color);
+  transform: rotate(90deg);
 }
 
 #modal-body h2 {
@@ -253,40 +308,54 @@ footer {
   padding-bottom: 6px;
 }
 
-/* L1 分析的卡片样式 */
 .l1-analysis-card {
   background: var(--background-color);
   border-radius: var(--radius-md);
   padding: 16px;
   margin-bottom: 16px;
+  border: 1px solid var(--border-color);
 }
+
 .l1-analysis-card p {
   font-size: 16px;
   line-height: 1.7;
 }
+
 .l1-sentiment {
   font-weight: bold;
   font-size: 18px;
   margin-top: 12px;
 }
-.l1-sentiment.positive { color: #009e49; }
-.l1-sentiment.negative { color: #d90000; }
-.l1-sentiment.neutral { color: #475569; }
 
-/* L2 关联文章列表 */
+.l1-sentiment.positive {
+  color: #009e49;
+}
+
+.l1-sentiment.negative {
+  color: #d90000;
+}
+
+.l1-sentiment.neutral {
+  color: #475569;
+}
+
 .article-list {
   list-style: none;
   padding: 0;
 }
-.article-list li {
-  padding: 10px 0;
+
+.article-list-item {
+  padding: 12px 8px;
   border-bottom: 1px dashed var(--border-color);
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: var(--transition);
+  border-radius: var(--radius-sm);
 }
-.article-list li:hover {
+
+.article-list-item:hover {
   color: var(--primary-color);
+  background-color: var(--background-color);
 }
 
 .modal-back-btn {
@@ -294,13 +363,20 @@ footer {
   color: white;
   border: none;
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: 500;
   margin-bottom: 20px;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
-/* [新增] 分类 Tab 样式 */
+.modal-back-btn:hover {
+  box-shadow: var(--shadow-md);
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
 .category-tab {
   display: inline-block;
   padding: 10px 20px;
@@ -311,85 +387,64 @@ footer {
   cursor: pointer;
   font-weight: 500;
   transition: var(--transition);
+  transform: translateY(0);
 }
+
 .category-tab:hover {
   background-color: var(--background-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
+
 .category-tab.active {
   background: var(--gradient-primary);
   color: white;
   border-color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
-}
-
-/* --- Treemap 样式 --- */
-#treemap-container {
-  /* 确保容器有高度 */
-  min-height: 400px; 
-  background-color: var(--card-bg-color);
-  border-radius: var(--radius-lg);
-  padding: 20px;
   box-shadow: var(--shadow-md);
-  margin-top: 20px;
-  overflow: hidden; /* 隐藏溢出内容 */
-  position: relative; /* 确保子元素定位正确 */
+  transform: translateY(-2px);
 }
 
 #treemap-container svg {
-  display: block; /* 移除 svg 底部默认空白 */
-  /* 我们在 JS 中已经设置了 width: 100%, height: auto; */
+  display: block;
 }
 
-/* 热力图单个区块的容器 */
-.treemap-cell {
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.treemap-cell:hover {
-  transform: scale(1.02); /* 悬停时略微放大 */
-  z-index: 1; /* 确保悬停的区块在上面 */
-  box-shadow: var(--shadow-lg); /* 悬停时添加更明显的阴影 */
-}
-
-/* 热力图区块的矩形 */
 .treemap-cell rect {
   stroke-width: 1px;
-  fill-opacity: 0.9; /* 稍微透明 */
-  rx: var(--radius-sm); /* 圆角 */
-  ry: var(--radius-sm); /* 圆角 */
-  transition: fill-opacity 0.2s ease-in-out;
+  fill-opacity: 0.85;
+  rx: var(--radius-sm);
+  ry: var(--radius-sm);
+  transition: fill-opacity 0.3s ease-in-out;
 }
 
 .treemap-cell:hover rect {
-  fill-opacity: 1; /* 悬停时完全不透明 */
+  fill-opacity: 1;
 }
 
-/* 热力图区块的文字 */
 .treemap-cell text {
   font-family: 'Inter', sans-serif;
-  fill: var(--text-color-inverted); /* 文字颜色，假设背景是深色 */
-  font-weight: 600; /* 加粗 */
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* 文字阴影，增加可读性 */
-  pointer-events: none; /* 确保点击穿透到 rect */
+  fill: var(--text-color-inverted);
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
 }
 
 .treemap-cell .topic-name {
-  font-size: 14px; /* 话题名称字号 */
-}
-.treemap-cell .topic-value {
-  font-size: 11px; /* 数量字号 */
+  font-size: 16px;
 }
 
-/* [新增] 日期选择器样式 */
+.treemap-cell .topic-value {
+  font-size: 12px;
+}
+
 .date-picker-container {
   margin-top: 12px;
   font-size: 16px;
   color: var(--text-secondary);
   font-weight: 500;
 }
+
 #report-date-picker {
-  padding: 8px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   font-family: 'Inter', sans-serif;
@@ -397,4 +452,11 @@ footer {
   background-color: var(--card-bg-color);
   color: var(--text-color);
   margin-left: 8px;
+  transition: var(--transition);
+}
+
+#report-date-picker:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  outline: none;
 }
